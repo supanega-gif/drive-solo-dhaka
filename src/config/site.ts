@@ -8,7 +8,6 @@ export const site = {
   whatsappNumber: '8801922603331', // international format, no +
   whatsappDisplay: '01922603331',
   sessionWindow: '6:00 AM – 8:00 AM',
-  slotsPerMonth: 4,
   mentoredCount: '4+',
   rescheduleNoticeHours: 10,
   packageValidityDays: 45,

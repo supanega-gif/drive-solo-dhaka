@@ -1,23 +1,20 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import {
-  Car, Clock, Users, X, Check, Menu, MessageCircle, ShieldCheck, Route, Video, EyeOff, Play, ChevronDown, Phone, User,
-} from 'lucide-react'
+import { Menu, X, MessageCircle, Phone, ChevronDown } from 'lucide-react'
 import { site, taka, waLink, messages, packageMessage, type Tier } from './config/site'
 
 const nav = [
-  ['Why Own-Car', '#why'],
-  ['Roadmap', '#roadmap'],
-  ['Safety Protocol', '#safety'],
+  ['Why your car', '#morning'],
+  ['Route', '#route'],
+  ['Safety', '#safety'],
   ['Pricing', '#pricing'],
   ['FAQ', '#faq'],
 ] as const
 
-const card = 'rounded-2xl border border-line bg-panel p-6'
+const diag = site.tiers[0]
 const btnPrimary =
-  'inline-flex items-center justify-center gap-2 rounded-xl bg-amber px-5 py-3 font-semibold text-ink transition-colors hover:bg-amber-400 active:translate-y-px'
-const btnOutline =
-  'inline-flex items-center justify-center gap-2 rounded-xl border border-amber/70 px-5 py-3 font-semibold text-amber transition-colors hover:bg-amber/10 active:translate-y-px'
-const eyebrow = 'text-xs font-semibold uppercase tracking-[0.18em] text-amber'
+  'inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-ink px-6 py-3 font-semibold text-paper transition-colors hover:bg-[#2c3d52] active:translate-y-px'
+const btnQuiet =
+  'inline-flex min-h-12 items-center justify-center gap-2 rounded-md border-2 border-ink px-6 py-3 font-semibold text-ink transition-colors hover:bg-ink/5 active:translate-y-px'
 
 function WaLink({ msg, className, children }: { msg: string; className: string; children: ReactNode }) {
   return (
@@ -27,15 +24,88 @@ function WaLink({ msg, className, children }: { msg: string; className: string; 
   )
 }
 
-function Section({ id, title, intro, pad = 'py-16', children }: { id?: string; title: string; intro?: string; pad?: string; children: ReactNode }) {
+/* ---------- schematic map of Gulshan / Banani (not to scale) ---------- */
+
+const streets = [
+  'M200 300 L200 40', // Gulshan Avenue, Gulshan 1 (south) to Gulshan 2 (north)
+  'M20 96 L200 96', // Kemal Ataturk Avenue, Banani to Gulshan 2
+  'M200 250 L330 250', 'M200 200 L330 200', 'M200 150 L330 150', // residential roads
+  'M245 96 L245 300', 'M290 96 L290 300',
+  'M80 96 L80 300', 'M20 190 L200 190', // Banani grid
+]
+const routes = [
+  'M245 250 L290 250 L290 200 L245 200 Z', // phase 1: quiet residential loop
+  'M245 200 L245 250 L200 250 L200 96 L80 96', // phase 2: onto Gulshan Ave and Kemal Ataturk Ave
+  'M80 96 L80 190 L20 190 M200 250 L200 300', // phase 3: commute out, to the parking ramp
+]
+
+function RouteMap({ phase, animate = false, label }: { phase: 1 | 2 | 3; animate?: boolean; label: string }) {
   return (
-    <section id={id} className={`mx-auto max-w-6xl px-4 sm:px-6 ${pad}`}>
-      <h2 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
-      {intro && <p className="mt-3 max-w-2xl text-muted">{intro}</p>}
-      <div className="mt-10">{children}</div>
-    </section>
+    <svg viewBox="0 0 400 320" role="img" aria-label={label} className="h-auto w-full">
+      <path d="M352 30 C372 90 338 140 360 200 C378 250 350 290 366 318 L400 318 L400 30 Z" fill="#9FB6CC" />
+      {streets.map((d) => (
+        <path key={d} d={d} stroke="#1E2A3A" strokeOpacity=".28" strokeWidth="4" fill="none" strokeLinecap="round" />
+      ))}
+      {routes.slice(0, phase).map((d, i) => (
+        <path
+          key={d}
+          d={d}
+          pathLength={1}
+          className={animate ? 'route-draw' : undefined}
+          style={animate ? { animationDelay: `${0.4 + i * 0.9}s` } : undefined}
+          stroke="#E2643B"
+          strokeWidth="6"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ))}
+      <circle cx="200" cy="96" r="9" fill="#fff" stroke="#1E2A3A" strokeWidth="3" />
+      <circle cx="200" cy="250" r="9" fill="#fff" stroke="#1E2A3A" strokeWidth="3" />
+      <rect x="258" y="216" width="16" height="16" rx="2" fill="#1E2A3A" />
+      <g fill="#1E2A3A" fontFamily="Archivo, sans-serif" fontSize="13" fontWeight="600">
+        <text x="212" y="88">Gulshan 2</text>
+        <text x="212" y="276">Gulshan 1</text>
+        <text x="24" y="86">Banani</text>
+        <text x="194" y="200" transform="rotate(-90 194 200)" fontSize="11" fontWeight="500">Gulshan Ave</text>
+        <text x="90" y="114" fontSize="11" fontWeight="500">Kemal Ataturk Ave</text>
+        <text x="300" y="228" fontSize="11" fontWeight="500">Your gate</text>
+        <text x="392" y="22" fontSize="11" fontWeight="500" textAnchor="end">Lake</text>
+      </g>
+    </svg>
   )
 }
+
+/* ---------- the morning as a time rule ---------- */
+
+function TimeRule() {
+  const pos = (h: number) => ((h - 5.5) / 4) * 100 // 5:30 to 9:30 across the bar
+  const marks = [
+    [6, '6:00', 'Lesson starts at your gate'],
+    [8, '8:00', 'Your driver arrives'],
+    [9, '9:00', 'You are at the office'],
+  ] as const
+  return (
+    <figure className="mt-10" aria-label="A typical morning">
+      <div className="relative h-3 rounded-full bg-paper/70">
+        <div className="absolute inset-y-0 rounded-full bg-route" style={{ left: `${pos(6)}%`, width: `${pos(8) - pos(6)}%` }} />
+      </div>
+      <div aria-hidden className="relative h-2">
+        {marks.map(([h]) => <span key={h} className="absolute top-0 h-2 w-0.5 bg-ink" style={{ left: `${pos(h)}%` }} />)}
+      </div>
+      <ol className="mt-2 grid grid-cols-3 gap-3 text-sm">
+        {marks.map(([, t, d]) => (
+          <li key={t}>
+            <span className="block font-bold">{t}</span>
+            <span className="block leading-snug text-ink-soft">{d}</span>
+          </li>
+        ))}
+      </ol>
+    </figure>
+  )
+}
+
+/* ---------- page ---------- */
 
 function Header() {
   const [open, setOpen] = useState(false)
@@ -48,32 +118,27 @@ function Header() {
     return () => io.disconnect()
   }, [])
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur">
+    <header className="sticky top-0 z-40 bg-haze/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <a href="#top" className="flex items-center gap-2 py-3">
-          <span className="font-extrabold tracking-wide uppercase">{site.brandName}</span>
-          <span className="hidden rounded-full border border-line px-2 py-0.5 text-xs text-muted sm:inline">
-            Gulshan • Banani
-          </span>
-        </a>
-        <nav className="hidden items-center gap-6 text-sm text-muted lg:flex" aria-label="Main">
+        <a href="#top" className="wide py-3 text-lg font-extrabold">{site.brandName}</a>
+        <nav className="hidden items-center gap-7 lg:flex" aria-label="Main">
           {nav.map(([label, href]) => (
             <a
               key={href}
               href={href}
               aria-current={active === href ? 'location' : undefined}
-              className={`py-2 transition-colors hover:text-fg ${active === href ? 'text-fg underline decoration-amber decoration-2 underline-offset-8' : ''}`}
+              className={`py-2 font-medium underline-offset-8 hover:underline ${active === href ? 'underline decoration-route decoration-[3px]' : ''}`}
             >
               {label}
             </a>
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <span className="hidden sm:block">
-            <WaLink msg={messages.general} className={`${btnOutline} px-4 py-2 text-sm`}>Book on WhatsApp</WaLink>
-          </span>
+          <WaLink msg={messages.general} className="hidden min-h-11 items-center gap-2 rounded-md px-3 font-semibold hover:bg-ink/5 sm:inline-flex">
+            <MessageCircle className="size-5" aria-hidden /> WhatsApp
+          </WaLink>
           <button
-            className="rounded-lg p-2 lg:hidden"
+            className="flex size-11 items-center justify-center rounded-md lg:hidden"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -84,11 +149,10 @@ function Header() {
         </div>
       </div>
       {open && (
-        <nav id="mobile-menu" className="border-t border-line px-4 pb-4 lg:hidden" aria-label="Mobile">
+        <nav id="mobile-menu" className="border-t border-ink/15 px-4 pb-4 lg:hidden" aria-label="Mobile">
           {nav.map(([label, href]) => (
-            <a key={href} href={href} onClick={() => setOpen(false)} className="block py-3 text-lg">{label}</a>
+            <a key={href} href={href} onClick={() => setOpen(false)} className="block py-3 text-lg font-medium">{label}</a>
           ))}
-          <WaLink msg={messages.general} className={`${btnOutline} mt-2 w-full`}>Book on WhatsApp</WaLink>
         </nav>
       )}
     </header>
@@ -96,100 +160,108 @@ function Header() {
 }
 
 function Hero() {
-  const metrics = [
-    { icon: Car, big: '100% Your Own Car', small: "Learn your exact vehicle's blind spots & braking" },
-    { icon: Clock, big: site.sessionWindow, small: 'Discreet pre-traffic sessions at your doorstep' },
-    { icon: Users, big: `${site.mentoredCount} Car Owners Mentored`, small: 'Proven transition from passenger to solo driver' },
-  ]
   return (
-    <section id="top" className="mx-auto max-w-6xl px-4 pt-16 pb-12 sm:px-6 sm:pt-24">
-      <p className="inline-block rounded-full border border-amber/40 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-amber uppercase sm:text-xs">
-        Limited to {site.slotsPerMonth} morning slots / month in Gulshan & Banani
-      </p>
-      <h1 className="mt-6 max-w-4xl text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl lg:text-7xl">
-        Own a Car in Dhaka, Yet Still Rely on a Driver?
-      </h1>
-      <p className="mt-6 max-w-2xl text-lg text-muted">
-        Private, 1-on-1 early-morning driving mentorship from your doorstep—using your own car before Dhaka
-        traffic wakes up. Gain total road independence in 10 sessions.
-      </p>
-      <div id="hero-cta" className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <WaLink msg={messages.diagnostic} className={btnPrimary}>
-          Book 1-Hour Diagnostic Drive ({taka(site.tiers[0].price)})
-        </WaLink>
-        <a href="#pricing" className={btnOutline}>Explore Mentorship Plans</a>
-      </div>
-      <p className="mt-3 text-sm text-muted">
-        The diagnostic fee is fully credited toward Core or VIP if you upgrade within {site.deductibleDays} days.
-      </p>
-      <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
-        {metrics.map(({ icon: Icon, big, small }) => (
-          <div key={big} className="bg-panel p-5">
-            <Icon className="size-5 text-amber" aria-hidden />
-            <p className="mt-3 font-mono font-bold">{big}</p>
-            <p className="mt-1 text-sm text-muted">{small}</p>
+    <section id="top" className="relative overflow-hidden bg-haze">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-10 pb-24 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:pt-16 lg:pb-32">
+        <div>
+          <h1 className="wide text-[2.5rem] leading-[1.02] font-extrabold sm:text-6xl lg:text-[4.1rem]">
+            Own a car in Dhaka, yet still rely on a driver?
+          </h1>
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
+            Private, 1-on-1 driving lessons from your doorstep, in your own car, before Dhaka traffic wakes up.
+            Total road independence in 10 sessions.
+          </p>
+          <TimeRule />
+          <div id="hero-cta" className="mt-2 flex flex-col gap-3 sm:flex-row">
+            <WaLink msg={messages.diagnostic} className={btnPrimary}>
+              <MessageCircle className="size-5" aria-hidden /> Book a diagnostic drive · {taka(diag.price)}
+            </WaLink>
+            <a href="#pricing" className={btnQuiet}>See the packages</a>
           </div>
-        ))}
+          <p className="mt-3 text-sm text-ink-soft">
+            One hour at your gate. Fully credited toward Core or VIP if you continue within {site.deductibleDays} days.
+          </p>
+        </div>
+        <div className="rounded-xl bg-paper/60 p-3 sm:p-5">
+          <RouteMap phase={1} animate label="Schematic map of Gulshan and Banani with a first-lesson route around quiet residential roads near your gate" />
+          <p className="mt-2 text-xs text-ink-soft">Lesson 1, drawn on a schematic of Gulshan. Not to scale.</p>
+        </div>
+      </div>
+      <div aria-hidden className="absolute inset-x-0 bottom-0 h-10 bg-dawn" />
+    </section>
+  )
+}
+
+function Section({ id, title, intro, tone = 'paper', children }: { id?: string; title: string; intro?: string; tone?: 'paper' | 'mist'; children: ReactNode }) {
+  return (
+    <section id={id} className={tone === 'mist' ? 'bg-mist' : 'bg-paper'}>
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
+        <h2 className="wide max-w-3xl text-3xl leading-tight font-extrabold sm:text-[2.6rem]">{title}</h2>
+        {intro && <p className="mt-4 max-w-2xl text-lg text-ink-soft">{intro}</p>}
+        <div className="mt-12">{children}</div>
       </div>
     </section>
   )
 }
 
-function Comparison() {
-  const school = [
-    'Beat-up shared manual training cars that feel nothing like your vehicle',
-    'Rushed 20–30 minute sessions at distant, crowded training centers',
-    'Zero preparation for your actual office route or tight apartment basement parking',
-    'Public, uncomfortable group environment',
-  ]
-  const mentor = [
-    'Train inside your own personal sedan or SUV from Day 1',
-    'Full 60-minute uninterrupted 1-on-1 coaching from your doorstep',
-    'Tailored to Gulshan/Banani avenues, roundabouts, and your exact parking spot',
-    "100% discreet early-morning schedule before your driver's shift begins",
+function Morning() {
+  const rows = [
+    ['The car', 'Shared, worn manual training cars that feel nothing like yours', 'Your own sedan or SUV from the first minute'],
+    ['The lesson', 'Rushed 20–30 minutes at a distant, crowded centre', 'A full 60 minutes, 1-on-1, starting at your gate'],
+    ['The roads', 'No practice on your route or your basement ramp', 'Gulshan and Banani avenues, roundabouts and your exact parking spot'],
+    ['The time', 'Fixed slots in the middle of the working day', `${site.sessionWindow}, before your driver's shift begins`],
   ]
   return (
-    <Section id="why" title="Why Own-Car Mentorship Beats Driving Schools">
-      <div className="grid gap-8 md:grid-cols-[1fr_1.25fr]">
-        <div className="p-2 sm:p-6">
-          <h3 className="text-lg font-semibold text-muted">Traditional Dhaka Driving Schools</h3>
-          <ul className="mt-5 space-y-4">
-            {school.map((t) => (
-              <li key={t} className="flex gap-3 text-muted"><X className="mt-0.5 size-5 shrink-0" aria-hidden />{t}</li>
-            ))}
-          </ul>
-        </div>
-        <div className={`${card} border-amber/50`}>
-          <h3 className="text-lg font-semibold">Private Executive Mentorship</h3>
-          <ul className="mt-5 space-y-4">
-            {mentor.map((t) => (
-              <li key={t} className="flex gap-3"><Check className="mt-0.5 size-5 shrink-0 text-amber" aria-hidden />{t}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
+    <Section id="morning" title="Why lessons in your own car beat a driving school">
+      {/* desktop: a comparison table; phone: stacked rows */}
+      <table className="hidden w-full border-collapse text-left md:table">
+        <thead>
+          <tr className="border-b-2 border-ink">
+            <th scope="col" className="w-36 py-3 pr-4"><span className="sr-only">Topic</span></th>
+            <th scope="col" className="py-3 pr-6 font-semibold text-ink-soft">Typical driving school</th>
+            <th scope="col" className="py-3 font-semibold">Private lessons in your car</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([k, school, us]) => (
+            <tr key={k} className="border-b border-ink/15 align-top">
+              <th scope="row" className="py-5 pr-4 font-semibold">{k}</th>
+              <td className="py-5 pr-6 text-ink-soft">{school}</td>
+              <td className="py-5 font-medium">{us}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <dl className="divide-y divide-ink/15 border-y border-ink/15 md:hidden">
+        {rows.map(([k, school, us]) => (
+          <div key={k} className="py-5">
+            <dt className="font-bold">{k}</dt>
+            <dd className="mt-2 font-medium">{us}</dd>
+            <dd className="mt-1 text-sm text-ink-soft">Driving school: {school.charAt(0).toLowerCase() + school.slice(1)}</dd>
+          </div>
+        ))}
+      </dl>
     </Section>
   )
 }
 
-function Roadmap() {
+function Route() {
   const phases = [
-    ['Sessions 1–3', 'Vehicle Calibration & Quiet Lanes', 'Mirror calibration, left-side bumper judgment, smooth automatic throttle/braking control, and low-speed maneuvers in empty Gulshan/Banani residential lanes.'],
-    ['Sessions 4–7', 'Main Avenues, Roundabouts & U-Turns', 'Merging onto Gulshan Avenue and Kemal Ataturk Avenue, handling morning traffic flow, defensive spacing against buses/rickshaws, and confident U-turns.'],
-    ['Sessions 8–10', 'Tight Parking & Real Commute Mastery', 'Tight apartment basement and mall parking (reverse & parallel), flyover merges, and real-world office commute simulations.'],
+    { n: 1 as const, s: 'Sessions 1–3', t: 'Your car and quiet lanes', b: 'Mirror set-up, left-side bumper judgement, smooth automatic throttle and braking, and low-speed manoeuvres in empty residential lanes.' },
+    { n: 2 as const, s: 'Sessions 4–7', t: 'Avenues, roundabouts and U-turns', b: 'Merging onto Gulshan Avenue and Kemal Ataturk Avenue, morning traffic flow, safe spacing from buses and rickshaws, and confident U-turns.' },
+    { n: 3 as const, s: 'Sessions 8–10', t: 'Tight parking and your real commute', b: 'Apartment basement and mall parking, reverse and parallel, flyover merges, and practice runs of your actual office commute.' },
   ]
   return (
-    <Section id="roadmap" title="The 3-Phase Dhaka Road Roadmap">
-      {/* one road: dashed lane marking runs through three stops (the page's single authored motion) */}
-      <ol className="reveal relative grid gap-10 md:grid-cols-3 md:gap-10">
-        <span aria-hidden className="absolute top-2 bottom-2 left-[7px] border-l-2 border-dashed border-amber/50 md:hidden" />
-        <span aria-hidden className="absolute top-[7px] right-0 left-0 hidden border-t-2 border-dashed border-amber/50 md:block" />
-        {phases.map(([sessions, title, body], i) => (
-          <li key={title} className="relative pl-10 md:pt-10 md:pl-0">
-            <span aria-hidden className="absolute top-1 left-0 size-4 rounded-full border-2 border-amber bg-ink md:top-0" />
-            <p className="font-mono text-sm font-bold text-amber">{sessions}</p>
-            <h3 className="mt-2 text-lg font-semibold">Phase {i + 1}: {title}</h3>
-            <p className="mt-2 text-muted">{body}</p>
+    <Section id="route" tone="mist" title="Ten sessions, one route that grows" intro="Each phase starts where the last one ended. You never meet main-road traffic before your car control is ready for it.">
+      <ol className="grid gap-12 md:grid-cols-3 md:gap-8">
+        {phases.map((p) => (
+          <li key={p.n}>
+            <div className="rounded-xl bg-paper p-3">
+              <RouteMap phase={p.n} label={`Schematic route for phase ${p.n}: ${p.t}`} />
+            </div>
+            <p className="mt-5 text-sm font-bold text-route-ink">{p.s}</p>
+            <h3 className="mt-1 text-xl font-bold">{p.t}</h3>
+            <p className="mt-2 text-ink-soft">{p.b}</p>
           </li>
         ))}
       </ol>
@@ -198,74 +270,81 @@ function Roadmap() {
 }
 
 function Safety() {
-  const items = [
-    [ShieldCheck, 'Mutual Safety & Liability Agreement', 'Transparent 1-page signed agreement before Session 1, backed by verified NID and BRTA Professional Driving License credentials.'],
-    [Route, 'Pre-Traffic Progression Protocol', 'Beginners never touch main avenues until vehicle control is mastered on quiet residential streets at 6:00 AM.'],
-    [Video, 'Road-Cam Video Feedback', 'Forward-facing road & audio logging for mutual safety verification plus short post-session review clips sent privately to help you improve faster.'],
-    [EyeOff, 'Total Discretion & Privacy', `Sessions are scheduled between ${site.sessionWindow}, before your current driver arrives, and footage is never shared publicly without written consent.`],
-  ] as const
   return (
-    <Section id="safety" title="Safety, Privacy & Liability Protocol">
-      <div className="grid gap-x-12 sm:grid-cols-2">
-        {items.map(([Icon, title, body]) => (
-          <div key={title} className="flex gap-4 border-t border-line py-6">
-            <Icon className="mt-1 size-6 shrink-0 text-amber" aria-hidden />
-            <div>
-              <h3 className="text-lg font-semibold">{title}</h3>
-              <p className="mt-2 text-muted">{body}</p>
+    <Section id="safety" title="What keeps you, and your car, safe" intro="Your car has no instructor pedals, so safety comes from the order you learn in and from what is agreed before the first session.">
+      <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <figure className="flex min-h-44 flex-col rounded-lg border-2 sm:aspect-[1.586] border-ink bg-mist p-4">
+            <p className="text-xs font-semibold text-ink-soft">BRTA</p>
+            <p className="wide mt-1 text-lg leading-tight font-bold">Professional Driving Licence</p>
+            <div aria-hidden className="mt-3 flex gap-3"><span className="h-12 w-10 rounded-sm bg-haze" /><span className="flex-1 space-y-2 pt-1"><span className="block h-2 rounded bg-ink/15" /><span className="block h-2 w-2/3 rounded bg-ink/15" /></span></div>
+            <figcaption className="mt-auto text-sm text-ink-soft">Shown, with my NID, before Session 1</figcaption>
+          </figure>
+          <figure className="relative flex min-h-44 flex-col justify-between sm:aspect-[1.586] overflow-hidden rounded-lg bg-ink p-4 text-paper">
+            <p className="text-xs font-semibold"><span aria-hidden className="text-route">●</span> REC 06:12</p>
+            <figcaption className="wide text-lg leading-tight font-bold">Every session on the road camera</figcaption>
+            <p className="text-xs opacity-80">Gulshan Avenue</p>
+          </figure>
+        </div>
+        <dl className="divide-y divide-ink/15 border-y border-ink/15">
+          {[
+            ['A signed agreement first', 'A one-page safety and liability agreement, signed before Session 1, with my BRTA licence and NID shown to you.'],
+            ['Quiet roads before main roads', 'Beginners stay in empty residential lanes at 6:00 AM until car control is solid.'],
+            ['Road-camera review', 'Every session is recorded for mutual safety. You get short review clips privately, to improve faster.'],
+            ['Private by default', `Sessions run ${site.sessionWindow}, before your driver arrives. Footage is never shared publicly without your written consent.`],
+          ].map(([t, d]) => (
+            <div key={t} className="py-5">
+              <dt className="font-bold">{t}</dt>
+              <dd className="mt-1 text-ink-soft">{d}</dd>
             </div>
-          </div>
-        ))}
+          ))}
+        </dl>
       </div>
     </Section>
   )
 }
 
-function SocialProof() {
-  const VideoTag = site.videoUrl ? 'a' : 'div'
+function PhotoSlot({ ratio, note }: { ratio: string; note: string }) {
   return (
-    <Section title="Mentee Results">
-      <VideoTag
-        {...(site.videoUrl ? { href: site.videoUrl, target: '_blank', rel: 'noopener' } : {})}
-        className="relative flex aspect-video max-w-3xl items-center justify-center overflow-hidden rounded-2xl border border-line bg-panel"
-      >
-        <div className="flex flex-col items-center gap-4 px-6 text-center">
-          <span className="flex size-16 items-center justify-center rounded-full bg-amber text-ink">
-            <Play className="ml-1 size-7" aria-hidden />
-          </span>
-          <p className="max-w-md font-semibold">"{site.videoTitle}"</p>
-          {!site.videoUrl && <p className="text-sm text-muted">Video coming soon</p>}
-        </div>
-      </VideoTag>
-      {site.testimonials.length > 0 && (
-        <div className="mt-6 grid gap-6 md:grid-cols-3">
-          {site.testimonials.map((t) => (
-            <figure key={t.name} className={card}>
-              <blockquote>"{t.quote}"</blockquote>
-              <figcaption className="mt-4 text-sm text-muted">{t.name}{t.detail && `, ${t.detail}`}</figcaption>
-            </figure>
-          ))}
-        </div>
-      )}
-    </Section>
+    <div className={`flex ${ratio} w-full items-center justify-center rounded-xl border-2 border-dashed border-ink/30 bg-paper p-6 text-center text-sm text-ink-soft`}>
+      {note}
+    </div>
   )
 }
 
-function About() {
+function Mentor() {
   const a = site.about
   return (
-    <Section id="about" title="Your Mentor">
-      <div className={`${card} flex flex-col gap-6 sm:flex-row sm:items-center`}>
+    <Section id="mentor" tone="mist" title="Who sits beside you">
+      <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:items-start">
         {a.photoUrl ? (
-          <img src={a.photoUrl} alt={a.name} className="size-32 shrink-0 rounded-2xl object-cover" />
+          <img src={a.photoUrl} alt={a.name} className="aspect-[4/5] w-full rounded-xl object-cover" />
         ) : (
-          <div className="flex size-32 shrink-0 items-center justify-center rounded-2xl border border-dashed border-line text-muted" aria-label="Photo placeholder">
-            <User className="size-10" aria-hidden />
-          </div>
+          <PhotoSlot ratio="aspect-[4/5] max-h-[28rem]" note="Photo coming: the mentor at the wheel" />
         )}
         <div>
-          <h3 className="text-xl font-semibold">{a.name}</h3>
-          <p className="mt-2 max-w-2xl text-muted">{a.bio}</p>
+          <h3 className="wide text-2xl font-extrabold">{a.name}</h3>
+          <p className="mt-3 max-w-xl text-lg text-ink-soft">{a.bio}</p>
+          <p className="mt-6 max-w-xl text-lg"><strong className="font-bold">{site.mentoredCount} car owners</strong> have already moved from the passenger seat to driving themselves.</p>
+          <div className="mt-8">
+            {site.videoUrl ? (
+              <a href={site.videoUrl} target="_blank" rel="noopener" className="font-semibold underline decoration-route decoration-2 underline-offset-4">
+                Watch: "{site.videoTitle}"
+              </a>
+            ) : (
+              <PhotoSlot ratio="aspect-video" note={`Video coming: "${site.videoTitle}"`} />
+            )}
+          </div>
+          {site.testimonials.length > 0 && (
+            <div className="mt-8 space-y-6">
+              {site.testimonials.map((t) => (
+                <figure key={t.name}>
+                  <blockquote className="text-lg">"{t.quote}"</blockquote>
+                  <figcaption className="mt-2 text-sm text-ink-soft">{t.name}{t.detail && `, ${t.detail}`}</figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Section>
@@ -274,47 +353,45 @@ function About() {
 
 function Pricing({ onSelect }: { onSelect: (t: Tier) => void }) {
   return (
-    <Section id="pricing" title="Transparent Pricing & Packages" pad="py-24">
-      <div className="grid gap-6 lg:grid-cols-3">
+    <Section id="pricing" title="Packages and prices" intro={`All packages are valid for ${site.packageValidityDays} days. Multi-hour packages can be split 50/50.`}>
+      <div className="border-t-2 border-ink">
         {site.tiers.map((t) => (
-          <div key={t.id} className={`${card} flex flex-col ${t.popular ? 'border-amber ring-1 ring-amber' : ''}`}>
-            {t.popular && <p className={eyebrow}>Most Popular</p>}
-            <h3 className={`text-xl font-semibold ${t.popular ? 'mt-2' : ''}`}>{t.name}</h3>
-            <p className="mt-4 font-mono text-4xl font-bold">{taka(t.price)}</p>
-            <p className="font-mono text-sm text-muted">{t.duration}</p>
-            <p className="mt-4 text-sm text-muted italic">{t.tagline}</p>
-            <ul className="mt-5 flex-1 space-y-3 text-sm">
-              {t.features.map((f) => (
-                <li key={f} className="flex gap-2"><Check className="mt-0.5 size-4 shrink-0 text-amber" aria-hidden />{f}</li>
-              ))}
+          <div key={t.id} className={`grid gap-4 border-b border-ink/15 py-8 lg:grid-cols-[1.2fr_0.6fr_1.6fr_13rem] lg:items-start lg:gap-8 ${t.popular ? '-mx-4 bg-dawn/40 px-4 sm:-mx-6 sm:px-6' : ''}`}>
+            <div>
+              {t.popular && <p className="text-sm font-bold text-route-ink">Most chosen</p>}
+              <h3 className="text-xl font-bold">{t.name}</h3>
+              <p className="mt-1 text-ink-soft">{t.tagline}</p>
+            </div>
+            <p>
+              <span className="wide block text-3xl font-extrabold">{taka(t.price)}</span>
+              <span className="text-ink-soft">{t.duration}</span>
+            </p>
+            <ul className="space-y-2 text-ink-soft">
+              {t.features.map((f) => <li key={f} className="flex gap-3"><span aria-hidden className="mt-2.5 h-0.5 w-3 shrink-0 bg-route" />{f}</li>)}
             </ul>
-            <button onClick={() => onSelect(t)} className={`${t.popular ? btnPrimary : btnOutline} mt-6 w-full`}>
-              {t.cta}
-            </button>
+            <button onClick={() => onSelect(t)} className={`${t.popular ? btnPrimary : btnQuiet} w-full`}>{t.cta}</button>
           </div>
         ))}
       </div>
-      <div className="mt-8 space-y-2 text-sm text-muted">
-        <p>All packages are valid for {site.packageValidityDays} days. <strong className="text-fg">50/50 split payment</strong> available on multi-hour packages.</p>
-        <p>Extended Practice Top-Up Pack available exclusively for active clients: {site.topUp.hours} Hours for <span className="font-mono text-fg">{taka(site.topUp.price)}</span>.</p>
-      </div>
+      <p className="mt-6 text-ink-soft">
+        Extended practice top-up for active clients: {site.topUp.hours} hours for <strong className="text-ink">{taka(site.topUp.price)}</strong>.
+      </p>
     </Section>
   )
 }
 
 function Faq() {
   const items = [
-    ["What if my car doesn't have dual instructor pedals?", `We operate strictly in empty residential lanes early in the ${site.sessionWindow} window during your initial sessions. You never enter main traffic until your braking reflexes and spatial judgment are verified safe, supported by verbal guidance and handbrake readiness.`],
-    ["Do I need a BRTA Learner's Permit before starting?", "A valid BRTA Learner's Permit or Driving License is required before driving on public Gulshan/Banani roads. If you don't have one yet, we can start inside gated private lanes or help you generate your BRTA e-Learner Permit online in 10 minutes."],
-    ["Will my current driver find out while I'm still learning?", `No. Most clients schedule sessions between ${site.sessionWindow}—well before their driver's morning shift begins—allowing you to practice in complete privacy.`],
-    ['What if I need to reschedule a morning session?', `Simply notify us at least ${site.rescheduleNoticeHours} hours in advance via WhatsApp to reschedule your slot within your ${site.packageValidityDays}-day package window at no extra charge.`],
-    ['Can I pay in installments?', 'Yes. Multi-hour packages can be paid 100% upfront or split 50% upon signing before Session 1 and 50% before Session 4 via Cash, bKash, or Bank Transfer.'],
+    ["What if my car doesn't have instructor pedals?", 'Your first sessions stay in empty residential lanes early in the morning. You never enter main traffic until your braking and judgement are verified safe, with verbal guidance and the handbrake within reach.'],
+    ["Do I need a BRTA learner's permit first?", "A valid BRTA learner's permit or licence is needed to drive on public roads. Without one yet, we start inside gated private lanes and help you apply for the e-learner permit online."],
+    ['Will my driver find out while I am learning?', `Not unless you tell them. Sessions run ${site.sessionWindow}, before most drivers' morning shift begins.`],
+    ['What if I need to reschedule?', `Message on WhatsApp at least ${site.rescheduleNoticeHours} hours ahead and the session moves within your ${site.packageValidityDays}-day window at no charge.`],
+    ['Can I pay in instalments?', 'Yes. Multi-hour packages can be paid in full, or 50% when you sign before Session 1 and 50% before Session 4, by cash, bKash or bank transfer.'],
   ]
   const [open, setOpen] = useState<number | null>(0)
   return (
-    <Section id="faq" title="Frequently Asked Questions">
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="divide-y divide-line rounded-2xl border border-line bg-panel">
+    <Section id="faq" tone="mist" title="Questions people ask first">
+      <div className="max-w-3xl divide-y divide-ink/15 border-y border-ink/15">
         {items.map(([q, a], i) => (
           <div key={q}>
             <h3>
@@ -323,29 +400,59 @@ function Faq() {
                 aria-expanded={open === i}
                 aria-controls={`faq-a${i}`}
                 onClick={() => setOpen(open === i ? null : i)}
-                className="flex w-full items-center justify-between gap-4 p-5 text-left font-semibold"
+                className="flex min-h-14 w-full items-center justify-between gap-4 py-4 text-left text-lg font-semibold"
               >
                 {q}
-                <ChevronDown className={`size-5 shrink-0 text-amber transition-transform ${open === i ? 'rotate-180' : ''}`} aria-hidden />
+                <ChevronDown className={`size-5 shrink-0 transition-transform ${open === i ? 'rotate-180' : ''}`} aria-hidden />
               </button>
             </h3>
-            <div id={`faq-a${i}`} role="region" aria-labelledby={`faq-q${i}`} hidden={open !== i} className="px-5 pb-5 text-muted">
-              <p className="max-w-[54ch]">{a}</p>
+            <div id={`faq-a${i}`} role="region" aria-labelledby={`faq-q${i}`} hidden={open !== i} className="pb-5 text-ink-soft">
+              <p className="max-w-[58ch]">{a}</p>
             </div>
           </div>
         ))}
       </div>
-      <aside className="hidden self-start rounded-2xl border border-amber/40 p-6 lg:sticky lg:top-24 lg:block">
-        <h3 className="text-lg font-semibold">Still deciding?</h3>
-        <p className="mt-2 text-sm text-muted">
-          Start with the 1-hour diagnostic drive. It is fully credited toward Core or VIP if you upgrade within {site.deductibleDays} days.
-        </p>
-        <WaLink msg={messages.diagnostic} className={`${btnPrimary} mt-5 w-full`}>
-          Book Diagnostic Drive • {taka(site.tiers[0].price)}
-        </WaLink>
-      </aside>
-      </div>
     </Section>
+  )
+}
+
+function Close() {
+  return (
+    <section className="bg-haze">
+      <div className="mx-auto max-w-6xl px-4 pt-20 pb-24 sm:px-6">
+        <h2 className="wide max-w-3xl text-4xl leading-tight font-extrabold sm:text-5xl">Ready to take the driver's seat of your own car?</h2>
+        <p className="mt-4 max-w-xl text-lg text-ink-soft">Start with one diagnostic drive at your gate. Continue within {site.deductibleDays} days and it is fully credited.</p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <WaLink msg={messages.diagnostic} className={btnPrimary}>
+            <MessageCircle className="size-5" aria-hidden /> Book the diagnostic drive · {taka(diag.price)}
+          </WaLink>
+          <WaLink msg={messages.callback} className={btnQuiet}>
+            <Phone className="size-5" aria-hidden /> Ask for a call back on WhatsApp
+          </WaLink>
+        </div>
+      </div>
+      <div aria-hidden className="h-10 bg-dawn" />
+    </section>
+  )
+}
+
+function Footer() {
+  return (
+    <footer className="bg-ink text-paper">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 text-sm sm:flex-row sm:justify-between sm:px-6">
+        <div>
+          <p className="wide text-base font-extrabold">{site.brandName}</p>
+          <p className="mt-1 opacity-80">{site.coverage.join(', ')}</p>
+          <p className="mt-1 opacity-80">Sessions {site.sessionWindow}</p>
+        </div>
+        <div className="sm:text-right">
+          <a href={waLink(messages.general)} target="_blank" rel="noopener" className="inline-block py-2 font-semibold underline-offset-4 hover:underline">
+            WhatsApp {site.whatsappDisplay}
+          </a>
+          <p><a href={site.termsUrl} className="inline-block py-2 underline underline-offset-4 opacity-80 hover:opacity-100">Safety & liability terms</a></p>
+        </div>
+      </div>
+    </footer>
   )
 }
 
@@ -368,8 +475,8 @@ function BookingModal({ tier, onClose }: { tier: Tier | null; onClose: () => voi
 
   const field = (name: string, label: string, opts: string[]) => (
     <label className="block">
-      <span className="text-sm text-muted">{label} <span className="text-xs">(optional)</span></span>
-      <select name={name} defaultValue="" className="mt-1 w-full rounded-xl border border-line bg-ink px-3 py-3 text-fg">
+      <span className="text-sm font-medium">{label} <span className="font-normal text-ink-soft">(optional)</span></span>
+      <select name={name} defaultValue="" className="mt-1 min-h-12 w-full rounded-md border-2 border-ink/25 bg-paper px-3 text-ink">
         <option value="">No preference</option>
         {opts.map((o) => <option key={o}>{o}</option>)}
       </select>
@@ -381,23 +488,23 @@ function BookingModal({ tier, onClose }: { tier: Tier | null; onClose: () => voi
       ref={ref}
       onClose={onClose}
       aria-labelledby="modal-title"
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-line bg-panel p-0 text-fg backdrop:bg-black/70"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-paper p-0 text-ink backdrop:bg-ink/60"
     >
       {tier && (
         <form onSubmit={submit} className="space-y-4 p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 id="modal-title" className="text-xl font-semibold">{tier.name}</h2>
-              <p className="font-mono text-amber">{taka(tier.price)} • {tier.duration}</p>
+              <h2 id="modal-title" className="text-xl font-bold">{tier.name}</h2>
+              <p className="text-ink-soft">{taka(tier.price)} · {tier.duration}</p>
             </div>
-            <button type="button" onClick={() => ref.current?.close()} aria-label="Close" className="rounded-lg p-1 text-muted hover:text-fg">
+            <button type="button" onClick={() => ref.current?.close()} aria-label="Close" className="flex size-11 items-center justify-center rounded-md hover:bg-ink/5">
               <X />
             </button>
           </div>
-          <p className="text-sm text-muted">Sessions run {site.sessionWindow}. Times below are start times.</p>
+          <p className="text-sm text-ink-soft">Sessions run {site.sessionWindow}. Times below are start times.</p>
           {field('area', 'Area', site.modal.areas)}
           {field('car', 'Car type', site.modal.carTypes)}
-          {field('time', 'Preferred morning time', site.modal.times)}
+          {field('time', 'Preferred start time', site.modal.times)}
           <button type="submit" className={`${btnPrimary} w-full`}>
             <MessageCircle className="size-5" aria-hidden /> Continue on WhatsApp
           </button>
@@ -407,50 +514,10 @@ function BookingModal({ tier, onClose }: { tier: Tier | null; onClose: () => voi
   )
 }
 
-function FinalCta() {
-  return (
-    <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-      <div className="rounded-3xl border border-amber/40 bg-panel px-6 py-14 text-center">
-        <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">Ready to Take the Driver's Seat of Your Own Car?</h2>
-        <p className="mt-4 text-muted">Only {site.slotsPerMonth} early-morning slots open this month in Gulshan & Banani.</p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <WaLink msg={messages.general} className={btnPrimary}>
-            <MessageCircle className="size-5" aria-hidden /> Chat on WhatsApp
-          </WaLink>
-          <WaLink msg={messages.callback} className={btnOutline}>
-            <Phone className="size-5" aria-hidden /> Ask for a call back on WhatsApp
-          </WaLink>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-line">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-muted sm:flex-row sm:justify-between sm:px-6">
-        <div>
-          <p className="font-extrabold tracking-wide text-fg uppercase">{site.brandName}</p>
-          <p className="mt-1">{site.coverage.join(' • ')}</p>
-          <p className="mt-1">Sessions {site.sessionWindow}</p>
-        </div>
-        <div className="sm:text-right">
-          <a href={waLink(messages.general)} target="_blank" rel="noopener" className="inline-block py-2 font-mono text-fg hover:text-amber">
-            WhatsApp {site.whatsappDisplay}
-          </a>
-          <p><a href={site.termsUrl} className="inline-block py-2 underline hover:text-fg">Safety & Liability Terms</a></p>
-        </div>
-      </div>
-    </footer>
-  )
-}
-
 export default function App() {
   const [tier, setTier] = useState<Tier | null>(null)
-  // mobile sticky bar appears only once the hero buttons have scrolled away (no duplicate CTA, no overlap)
+  // phone bar appears only once the hero buttons have scrolled away
   const [showBar, setShowBar] = useState(false)
-
   useEffect(() => {
     const hero = document.getElementById('hero-cta')
     if (!hero) return
@@ -459,43 +526,26 @@ export default function App() {
     return () => io.disconnect()
   }, [])
 
-  useEffect(() => {
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
-    }, { threshold: 0.15 })
-    document.querySelectorAll('.reveal').forEach((el) => io.observe(el))
-    return () => io.disconnect()
-  }, [])
-
   return (
     <div className="pb-20 md:pb-0">
       <Header />
       <main>
         <Hero />
-        <Comparison />
-        <Roadmap />
+        <Morning />
+        <Route />
         <Safety />
-        <SocialProof />
-        <About />
+        <Mentor />
         <Pricing onSelect={setTier} />
         <Faq />
-        <FinalCta />
+        <Close />
       </main>
       <Footer />
       <BookingModal tier={tier} onClose={() => setTier(null)} />
-
-      <WaLink
-        msg={messages.general}
-        className="fixed right-6 bottom-6 z-40 hidden size-14 items-center justify-center rounded-full bg-amber text-ink shadow-lg md:flex"
-      >
-        <MessageCircle className="size-7" aria-hidden />
-        <span className="sr-only">Chat on WhatsApp</span>
-      </WaLink>
       <div
-        className={`fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 p-2 backdrop-blur transition-[transform,visibility] duration-300 ease-out md:hidden ${showBar ? '' : 'invisible translate-y-full'}`}
+        className={`fixed inset-x-0 bottom-0 z-40 bg-haze/95 p-2 shadow-[0_-4px_16px_rgba(30,42,58,.15)] backdrop-blur transition-[transform,visibility] duration-300 ease-out md:hidden ${showBar ? '' : 'invisible translate-y-full'}`}
       >
-        <WaLink msg={messages.diagnostic} className={`${btnPrimary} h-12 w-full py-0`}>
-          Book Diagnostic Drive • {taka(site.tiers[0].price)}
+        <WaLink msg={messages.diagnostic} className={`${btnPrimary} w-full`}>
+          <MessageCircle className="size-5" aria-hidden /> Book diagnostic drive · {taka(diag.price)}
         </WaLink>
       </div>
     </div>
