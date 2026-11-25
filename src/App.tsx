@@ -44,7 +44,7 @@ function RouteMap({ phase, animate = false, label }: { phase: 1 | 2 | 3; animate
     <svg viewBox="0 0 400 320" role="img" aria-label={label} className="h-auto w-full">
       <path d="M352 30 C372 90 338 140 360 200 C378 250 350 290 366 318 L400 318 L400 30 Z" fill="#9FB6CC" />
       {streets.map((d) => (
-        <path key={d} d={d} stroke="#1E2A3A" strokeOpacity=".28" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path key={d} d={d} stroke="#1E2A3A" strokeOpacity=".28" strokeWidth="5" fill="none" strokeLinecap="round" />
       ))}
       {routes.slice(0, phase).map((d, i) => (
         <path
@@ -54,14 +54,14 @@ function RouteMap({ phase, animate = false, label }: { phase: 1 | 2 | 3; animate
           className={animate ? 'route-draw' : undefined}
           style={animate ? { animationDelay: `${0.4 + i * 0.9}s` } : undefined}
           stroke="#E2643B"
-          strokeWidth="6"
+          strokeWidth="5"
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       ))}
-      <circle cx="200" cy="96" r="9" fill="#fff" stroke="#1E2A3A" strokeWidth="3" />
-      <circle cx="200" cy="250" r="9" fill="#fff" stroke="#1E2A3A" strokeWidth="3" />
+      <circle cx="200" cy="96" r="9" fill="#fff" stroke="#1E2A3A" strokeWidth="5" />
+      <circle cx="200" cy="250" r="9" fill="#fff" stroke="#1E2A3A" strokeWidth="5" />
       <rect x="258" y="216" width="16" height="16" rx="2" fill="#1E2A3A" />
       <g fill="#1E2A3A" fontFamily="Archivo, sans-serif" fontSize="13" fontWeight="600">
         <text x="212" y="88">Gulshan 2</text>
@@ -86,16 +86,21 @@ function TimeRule() {
     [9, '9:00', 'You are at the office'],
   ] as const
   return (
-    <figure className="mt-10" aria-label="A typical morning">
+    <figure className="mt-24" aria-label="A typical morning">
       <div className="relative h-3 rounded-full bg-paper/70">
         <div className="absolute inset-y-0 rounded-full bg-route" style={{ left: `${pos(6)}%`, width: `${pos(8) - pos(6)}%` }} />
       </div>
       <div aria-hidden className="relative h-2">
         {marks.map(([h]) => <span key={h} className="absolute top-0 h-2 w-0.5 bg-ink" style={{ left: `${pos(h)}%` }} />)}
       </div>
-      <ol className="mt-2 grid grid-cols-3 gap-3 text-sm">
-        {marks.map(([, t, d]) => (
-          <li key={t}>
+      {/* labels sit under their ticks; 9:00 sits above the bar so it never collides with 8:00 */}
+      <ol className="relative mt-2 h-14 text-sm">
+        {marks.map(([h, t, d]) => (
+          <li
+            key={t}
+            className={h === 9 ? 'absolute right-0 -top-[5rem] w-28 text-right' : 'absolute w-28 sm:w-40'}
+            style={h === 9 ? undefined : { left: `${pos(h)}%` }}
+          >
             <span className="block font-bold">{t}</span>
             <span className="block leading-snug text-ink-soft">{d}</span>
           </li>
@@ -127,7 +132,7 @@ function Header() {
               key={href}
               href={href}
               aria-current={active === href ? 'location' : undefined}
-              className={`py-2 font-medium underline-offset-8 hover:underline ${active === href ? 'underline decoration-route decoration-[3px]' : ''}`}
+              className={`py-2 font-medium underline-offset-8 hover:underline ${active === href ? 'underline decoration-ink decoration-[3px]' : ''}`}
             >
               {label}
             </a>
@@ -169,7 +174,7 @@ function Hero() {
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
             Private, 1-on-1 driving lessons from your doorstep, in your own car, before Dhaka traffic wakes up.
-            Total road independence in 10 sessions.
+            The Core package takes you from passenger to solo driver in 10 sessions.
           </p>
           <TimeRule />
           <div id="hero-cta" className="mt-2 flex flex-col gap-3 sm:flex-row">
@@ -259,8 +264,8 @@ function Route() {
             <div className="rounded-xl bg-paper p-3">
               <RouteMap phase={p.n} label={`Schematic route for phase ${p.n}: ${p.t}`} />
             </div>
-            <p className="mt-5 text-sm font-bold text-route-ink">{p.s}</p>
-            <h3 className="mt-1 text-xl font-bold">{p.t}</h3>
+            <h3 className="mt-5 text-xl font-bold">{p.t}</h3>
+            <p className="mt-1 text-sm font-semibold">{p.s}</p>
             <p className="mt-2 text-ink-soft">{p.b}</p>
           </li>
         ))}
@@ -273,15 +278,13 @@ function Safety() {
   return (
     <Section id="safety" title="What keeps you, and your car, safe" intro="Your car has no instructor pedals, so safety comes from the order you learn in and from what is agreed before the first session.">
       <div className="grid gap-10 lg:grid-cols-2">
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-          <figure className="flex min-h-44 flex-col rounded-lg border-2 sm:aspect-[1.586] border-ink bg-mist p-4">
-            <p className="text-xs font-semibold text-ink-soft">BRTA</p>
-            <p className="wide mt-1 text-lg leading-tight font-bold">Professional Driving Licence</p>
-            <div aria-hidden className="mt-3 flex gap-3"><span className="h-12 w-10 rounded-sm bg-haze" /><span className="flex-1 space-y-2 pt-1"><span className="block h-2 rounded bg-ink/15" /><span className="block h-2 w-2/3 rounded bg-ink/15" /></span></div>
-            <figcaption className="mt-auto text-sm text-ink-soft">Shown, with my NID, before Session 1</figcaption>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+          <figure className="flex min-h-44 flex-col justify-between rounded-lg border-2 border-ink p-4 sm:aspect-[1.586]">
+            <p className="wide text-lg leading-tight font-bold">BRTA Professional Driving Licence</p>
+            <figcaption className="text-ink-soft">Shown to you, with my NID, before Session 1.</figcaption>
           </figure>
           <figure className="relative flex min-h-44 flex-col justify-between sm:aspect-[1.586] overflow-hidden rounded-lg bg-ink p-4 text-paper">
-            <p className="text-xs font-semibold"><span aria-hidden className="text-route">●</span> REC 06:12</p>
+            <p className="text-xs font-semibold"><svg aria-hidden viewBox="0 0 8 8" className="mr-1 inline size-2 align-middle"><circle cx="4" cy="4" r="4" fill="#E2643B" /></svg>REC 06:12</p>
             <figcaption className="wide text-lg leading-tight font-bold">Every session on the road camera</figcaption>
             <p className="text-xs opacity-80">Gulshan Avenue</p>
           </figure>
@@ -328,7 +331,7 @@ function Mentor() {
           <p className="mt-6 max-w-xl text-lg"><strong className="font-bold">{site.mentoredCount} car owners</strong> have already moved from the passenger seat to driving themselves.</p>
           <div className="mt-8">
             {site.videoUrl ? (
-              <a href={site.videoUrl} target="_blank" rel="noopener" className="font-semibold underline decoration-route decoration-2 underline-offset-4">
+              <a href={site.videoUrl} target="_blank" rel="noopener" className="font-semibold underline decoration-ink decoration-2 underline-offset-4">
                 Watch: "{site.videoTitle}"
               </a>
             ) : (
@@ -358,7 +361,6 @@ function Pricing({ onSelect }: { onSelect: (t: Tier) => void }) {
         {site.tiers.map((t) => (
           <div key={t.id} className={`grid gap-4 border-b border-ink/15 py-8 lg:grid-cols-[1.2fr_0.6fr_1.6fr_13rem] lg:items-start lg:gap-8 ${t.popular ? '-mx-4 bg-dawn/40 px-4 sm:-mx-6 sm:px-6' : ''}`}>
             <div>
-              {t.popular && <p className="text-sm font-bold text-route-ink">Most chosen</p>}
               <h3 className="text-xl font-bold">{t.name}</h3>
               <p className="mt-1 text-ink-soft">{t.tagline}</p>
             </div>
@@ -367,9 +369,13 @@ function Pricing({ onSelect }: { onSelect: (t: Tier) => void }) {
               <span className="text-ink-soft">{t.duration}</span>
             </p>
             <ul className="space-y-2 text-ink-soft">
-              {t.features.map((f) => <li key={f} className="flex gap-3"><span aria-hidden className="mt-2.5 h-0.5 w-3 shrink-0 bg-route" />{f}</li>)}
+              {t.features.map((f) => <li key={f} className="flex gap-3"><span aria-hidden className="mt-2.5 h-0.5 w-3 shrink-0 bg-ink/40" />{f}</li>)}
             </ul>
-            <button onClick={() => onSelect(t)} className={`${t.popular ? btnPrimary : btnQuiet} w-full`}>{t.cta}</button>
+            {t.id === 'diagnostic' ? (
+              <WaLink msg={messages.diagnostic} className={`${btnQuiet} w-full`}>{t.cta}</WaLink>
+            ) : (
+              <button onClick={() => onSelect(t)} className={`${t.popular ? btnPrimary : btnQuiet} w-full`}>{t.cta}</button>
+            )}
           </div>
         ))}
       </div>
