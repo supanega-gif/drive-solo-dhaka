@@ -79,27 +79,27 @@ function RouteMap({ phase, animate = false, label }: { phase: 1 | 2 | 3; animate
 /* ---------- the morning as a time rule ---------- */
 
 function TimeRule() {
-  const pos = (h: number) => ((h - 5.5) / 4) * 100 // 5:30 to 9:30 across the bar
+  const pos = (h: number) => ((h - 5.5) / 3.5) * 100 // 5:30 to 9:00 across the bar
   const marks = [
     [6, '6:00', 'Lesson starts at your gate'],
     [8, '8:00', 'Your driver arrives'],
     [9, '9:00', 'You are at the office'],
   ] as const
   return (
-    <figure className="mt-24" aria-label="A typical morning">
+    <figure className="mt-10" aria-label="A typical morning">
       <div className="relative h-3 rounded-full bg-paper/70">
         <div className="absolute inset-y-0 rounded-full bg-route" style={{ left: `${pos(6)}%`, width: `${pos(8) - pos(6)}%` }} />
       </div>
       <div aria-hidden className="relative h-2">
         {marks.map(([h]) => <span key={h} className="absolute top-0 h-2 w-0.5 bg-ink" style={{ left: `${pos(h)}%` }} />)}
       </div>
-      {/* labels sit under their ticks; 9:00 sits above the bar so it never collides with 8:00 */}
+      {/* 6:00 starts at its tick; 8:00 and 9:00 end at theirs, so the labels never collide */}
       <ol className="relative mt-2 h-14 text-sm">
         {marks.map(([h, t, d]) => (
           <li
             key={t}
-            className={h === 9 ? 'absolute right-0 -top-[5rem] w-28 text-right' : 'absolute w-28 sm:w-40'}
-            style={h === 9 ? undefined : { left: `${pos(h)}%` }}
+            className={h === 6 ? 'absolute w-24 sm:w-40' : 'absolute w-24 text-right sm:w-36'}
+            style={h === 6 ? { left: `${pos(h)}%` } : { right: `${100 - pos(h)}%` }}
           >
             <span className="block font-bold">{t}</span>
             <span className="block leading-snug text-ink-soft">{d}</span>
@@ -174,7 +174,7 @@ function Hero() {
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
             Private, 1-on-1 driving lessons from your doorstep, in your own car, before Dhaka traffic wakes up.
-            The Core package takes you from passenger to solo driver in 10 sessions.
+            The Core package is ten sessions built to take you from passenger to solo driver.
           </p>
           <TimeRule />
           <div id="hero-cta" className="mt-2 flex flex-col gap-3 sm:flex-row">
@@ -279,11 +279,11 @@ function Safety() {
     <Section id="safety" title="What keeps you, and your car, safe" intro="Your car has no instructor pedals, so safety comes from the order you learn in and from what is agreed before the first session.">
       <div className="grid gap-10 lg:grid-cols-2">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-          <figure className="flex min-h-44 flex-col justify-between rounded-lg border-2 border-ink p-4 sm:aspect-[1.586]">
+          <figure className="flex min-h-44 flex-col justify-between rounded-lg border-2 border-ink p-4 sm:aspect-[1.586] lg:aspect-auto">
             <p className="wide text-lg leading-tight font-bold">BRTA Professional Driving Licence</p>
             <figcaption className="text-ink-soft">Shown to you, with my NID, before Session 1.</figcaption>
           </figure>
-          <figure className="relative flex min-h-44 flex-col justify-between sm:aspect-[1.586] overflow-hidden rounded-lg bg-ink p-4 text-paper">
+          <figure className="relative flex min-h-44 flex-col justify-between sm:aspect-[1.586] lg:aspect-auto overflow-hidden rounded-lg bg-ink p-4 text-paper">
             <p className="text-xs font-semibold"><svg aria-hidden viewBox="0 0 8 8" className="mr-1 inline size-2 align-middle"><circle cx="4" cy="4" r="4" fill="#E2643B" /></svg>REC 06:12</p>
             <figcaption className="wide text-lg leading-tight font-bold">Every session on the road camera</figcaption>
             <p className="text-xs opacity-80">Gulshan Avenue</p>
@@ -372,7 +372,7 @@ function Pricing({ onSelect }: { onSelect: (t: Tier) => void }) {
               {t.features.map((f) => <li key={f} className="flex gap-3"><span aria-hidden className="mt-2.5 h-0.5 w-3 shrink-0 bg-ink/40" />{f}</li>)}
             </ul>
             {t.id === 'diagnostic' ? (
-              <WaLink msg={messages.diagnostic} className={`${btnQuiet} w-full`}>{t.cta}</WaLink>
+              <WaLink msg={messages.diagnostic} className={`${btnQuiet} w-full text-center`}>{t.cta}</WaLink>
             ) : (
               <button onClick={() => onSelect(t)} className={`${t.popular ? btnPrimary : btnQuiet} w-full`}>{t.cta}</button>
             )}
