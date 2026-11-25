@@ -335,7 +335,7 @@ function Faq() {
           </div>
         ))}
       </div>
-      <aside className="self-start rounded-2xl border border-amber/40 p-6 lg:sticky lg:top-24">
+      <aside className="hidden self-start rounded-2xl border border-amber/40 p-6 lg:sticky lg:top-24 lg:block">
         <h3 className="text-lg font-semibold">Still deciding?</h3>
         <p className="mt-2 text-sm text-muted">
           Start with the 1-hour diagnostic drive. It is fully credited toward Core or VIP if you upgrade within {site.deductibleDays} days.
