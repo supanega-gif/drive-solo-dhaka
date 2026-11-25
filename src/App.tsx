@@ -14,9 +14,9 @@ const nav = [
 
 const card = 'rounded-2xl border border-line bg-panel p-6'
 const btnPrimary =
-  'inline-flex items-center justify-center gap-2 rounded-xl bg-amber px-5 py-3 font-semibold text-ink hover:bg-amber-400'
+  'inline-flex items-center justify-center gap-2 rounded-xl bg-amber px-5 py-3 font-semibold text-ink transition-colors hover:bg-amber-400 active:translate-y-px'
 const btnOutline =
-  'inline-flex items-center justify-center gap-2 rounded-xl border border-amber/70 px-5 py-3 font-semibold text-amber hover:bg-amber/10'
+  'inline-flex items-center justify-center gap-2 rounded-xl border border-amber/70 px-5 py-3 font-semibold text-amber transition-colors hover:bg-amber/10 active:translate-y-px'
 const eyebrow = 'text-xs font-semibold uppercase tracking-[0.18em] text-amber'
 
 function WaLink({ msg, className, children }: { msg: string; className: string; children: ReactNode }) {
@@ -27,9 +27,9 @@ function WaLink({ msg, className, children }: { msg: string; className: string; 
   )
 }
 
-function Section({ id, title, intro, children }: { id?: string; title: string; intro?: string; children: ReactNode }) {
+function Section({ id, title, intro, pad = 'py-16', children }: { id?: string; title: string; intro?: string; pad?: string; children: ReactNode }) {
   return (
-    <section id={id} className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section id={id} className={`mx-auto max-w-6xl px-4 sm:px-6 ${pad}`}>
       <h2 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
       {intro && <p className="mt-3 max-w-2xl text-muted">{intro}</p>}
       <div className="mt-10">{children}</div>
@@ -39,10 +39,18 @@ function Section({ id, title, intro, children }: { id?: string; title: string; i
 
 function Header() {
   const [open, setOpen] = useState(false)
+  const [active, setActive] = useState('')
+  useEffect(() => {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) setActive(`#${e.target.id}`)
+    }, { rootMargin: '-40% 0px -55% 0px' })
+    nav.forEach(([, href]) => { const el = document.querySelector(href); if (el) io.observe(el) })
+    return () => io.disconnect()
+  }, [])
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <a href="#top" className="flex items-center gap-2">
+        <a href="#top" className="flex items-center gap-2 py-3">
           <span className="font-extrabold tracking-wide uppercase">{site.brandName}</span>
           <span className="hidden rounded-full border border-line px-2 py-0.5 text-xs text-muted sm:inline">
             Gulshan • Banani
@@ -50,7 +58,14 @@ function Header() {
         </a>
         <nav className="hidden items-center gap-6 text-sm text-muted lg:flex" aria-label="Main">
           {nav.map(([label, href]) => (
-            <a key={href} href={href} className="hover:text-fg">{label}</a>
+            <a
+              key={href}
+              href={href}
+              aria-current={active === href ? 'location' : undefined}
+              className={`py-2 transition-colors hover:text-fg ${active === href ? 'text-fg underline decoration-amber decoration-2 underline-offset-8' : ''}`}
+            >
+              {label}
+            </a>
           ))}
         </nav>
         <div className="flex items-center gap-2">
@@ -98,12 +113,15 @@ function Hero() {
         Private, 1-on-1 early-morning driving mentorship from your doorstep—using your own car before Dhaka
         traffic wakes up. Gain total road independence in 10 sessions.
       </p>
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+      <div id="hero-cta" className="mt-8 flex flex-col gap-3 sm:flex-row">
         <WaLink msg={messages.diagnostic} className={btnPrimary}>
           Book 1-Hour Diagnostic Drive ({taka(site.tiers[0].price)})
         </WaLink>
         <a href="#pricing" className={btnOutline}>Explore Mentorship Plans</a>
       </div>
+      <p className="mt-3 text-sm text-muted">
+        The diagnostic fee is fully credited toward Core or VIP if you upgrade within {site.deductibleDays} days.
+      </p>
       <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
         {metrics.map(({ icon: Icon, big, small }) => (
           <div key={big} className="bg-panel p-5">
@@ -132,8 +150,8 @@ function Comparison() {
   ]
   return (
     <Section id="why" title="Why Own-Car Mentorship Beats Driving Schools">
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className={card}>
+      <div className="grid gap-8 md:grid-cols-[1fr_1.25fr]">
+        <div className="p-2 sm:p-6">
           <h3 className="text-lg font-semibold text-muted">Traditional Dhaka Driving Schools</h3>
           <ul className="mt-5 space-y-4">
             {school.map((t) => (
@@ -162,14 +180,15 @@ function Roadmap() {
   ]
   return (
     <Section id="roadmap" title="The 3-Phase Dhaka Road Roadmap">
-      <ol className="grid gap-6 md:grid-cols-3">
+      {/* one road: dashed lane marking runs through three stops (the page's single authored motion) */}
+      <ol className="reveal relative grid gap-10 md:grid-cols-3 md:gap-10">
+        <span aria-hidden className="absolute top-2 bottom-2 left-[7px] border-l-2 border-dashed border-amber/50 md:hidden" />
+        <span aria-hidden className="absolute top-[7px] right-0 left-0 hidden border-t-2 border-dashed border-amber/50 md:block" />
         {phases.map(([sessions, title, body], i) => (
-          <li key={title} className={`${card} reveal`} style={{ transitionDelay: `${i * 120}ms` }}>
-            <div className="flex items-baseline justify-between">
-              <span className="font-mono text-3xl font-bold text-amber">0{i + 1}</span>
-              <span className="font-mono text-xs text-muted">{sessions}</span>
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">Phase {i + 1}: {title}</h3>
+          <li key={title} className="relative pl-10 md:pt-10 md:pl-0">
+            <span aria-hidden className="absolute top-1 left-0 size-4 rounded-full border-2 border-amber bg-ink md:top-0" />
+            <p className="font-mono text-sm font-bold text-amber">{sessions}</p>
+            <h3 className="mt-2 text-lg font-semibold">Phase {i + 1}: {title}</h3>
             <p className="mt-2 text-muted">{body}</p>
           </li>
         ))}
@@ -187,12 +206,14 @@ function Safety() {
   ] as const
   return (
     <Section id="safety" title="Safety, Privacy & Liability Protocol">
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-x-12 sm:grid-cols-2">
         {items.map(([Icon, title, body]) => (
-          <div key={title} className={card}>
-            <Icon className="size-6 text-amber" aria-hidden />
-            <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-            <p className="mt-2 text-muted">{body}</p>
+          <div key={title} className="flex gap-4 border-t border-line py-6">
+            <Icon className="mt-1 size-6 shrink-0 text-amber" aria-hidden />
+            <div>
+              <h3 className="text-lg font-semibold">{title}</h3>
+              <p className="mt-2 text-muted">{body}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -253,7 +274,7 @@ function About() {
 
 function Pricing({ onSelect }: { onSelect: (t: Tier) => void }) {
   return (
-    <Section id="pricing" title="Transparent Pricing & Packages">
+    <Section id="pricing" title="Transparent Pricing & Packages" pad="py-24">
       <div className="grid gap-6 lg:grid-cols-3">
         {site.tiers.map((t) => (
           <div key={t.id} className={`${card} flex flex-col ${t.popular ? 'border-amber ring-1 ring-amber' : ''}`}>
@@ -292,7 +313,8 @@ function Faq() {
   const [open, setOpen] = useState<number | null>(0)
   return (
     <Section id="faq" title="Frequently Asked Questions">
-      <div className="max-w-3xl divide-y divide-line rounded-2xl border border-line bg-panel">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="divide-y divide-line rounded-2xl border border-line bg-panel">
         {items.map(([q, a], i) => (
           <div key={q}>
             <h3>
@@ -308,10 +330,20 @@ function Faq() {
               </button>
             </h3>
             <div id={`faq-a${i}`} role="region" aria-labelledby={`faq-q${i}`} hidden={open !== i} className="px-5 pb-5 text-muted">
-              {a}
+              <p className="max-w-[54ch]">{a}</p>
             </div>
           </div>
         ))}
+      </div>
+      <aside className="self-start rounded-2xl border border-amber/40 p-6 lg:sticky lg:top-24">
+        <h3 className="text-lg font-semibold">Still deciding?</h3>
+        <p className="mt-2 text-sm text-muted">
+          Start with the 1-hour diagnostic drive. It is fully credited toward Core or VIP if you upgrade within {site.deductibleDays} days.
+        </p>
+        <WaLink msg={messages.diagnostic} className={`${btnPrimary} mt-5 w-full`}>
+          Book Diagnostic Drive • {taka(site.tiers[0].price)}
+        </WaLink>
+      </aside>
       </div>
     </Section>
   )
@@ -362,6 +394,7 @@ function BookingModal({ tier, onClose }: { tier: Tier | null; onClose: () => voi
               <X />
             </button>
           </div>
+          <p className="text-sm text-muted">Sessions run {site.sessionWindow}. Times below are start times.</p>
           {field('area', 'Area', site.modal.areas)}
           {field('car', 'Car type', site.modal.carTypes)}
           {field('time', 'Preferred morning time', site.modal.times)}
@@ -376,7 +409,7 @@ function BookingModal({ tier, onClose }: { tier: Tier | null; onClose: () => voi
 
 function FinalCta() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div className="rounded-3xl border border-amber/40 bg-panel px-6 py-14 text-center">
         <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">Ready to Take the Driver's Seat of Your Own Car?</h2>
         <p className="mt-4 text-muted">Only {site.slotsPerMonth} early-morning slots open this month in Gulshan & Banani.</p>
@@ -385,7 +418,7 @@ function FinalCta() {
             <MessageCircle className="size-5" aria-hidden /> Chat on WhatsApp
           </WaLink>
           <WaLink msg={messages.callback} className={btnOutline}>
-            <Phone className="size-5" aria-hidden /> Request a callback
+            <Phone className="size-5" aria-hidden /> Ask for a call back on WhatsApp
           </WaLink>
         </div>
       </div>
@@ -403,10 +436,10 @@ function Footer() {
           <p className="mt-1">Sessions {site.sessionWindow}</p>
         </div>
         <div className="sm:text-right">
-          <a href={waLink(messages.general)} target="_blank" rel="noopener" className="font-mono text-fg hover:text-amber">
+          <a href={waLink(messages.general)} target="_blank" rel="noopener" className="inline-block py-2 font-mono text-fg hover:text-amber">
             WhatsApp {site.whatsappDisplay}
           </a>
-          <p className="mt-1"><a href={site.termsUrl} className="underline hover:text-fg">Safety & Liability Terms</a></p>
+          <p><a href={site.termsUrl} className="inline-block py-2 underline hover:text-fg">Safety & Liability Terms</a></p>
         </div>
       </div>
     </footer>
@@ -415,6 +448,16 @@ function Footer() {
 
 export default function App() {
   const [tier, setTier] = useState<Tier | null>(null)
+  // mobile sticky bar appears only once the hero buttons have scrolled away (no duplicate CTA, no overlap)
+  const [showBar, setShowBar] = useState(false)
+
+  useEffect(() => {
+    const hero = document.getElementById('hero-cta')
+    if (!hero) return
+    const io = new IntersectionObserver(([e]) => setShowBar(!e.isIntersecting && e.boundingClientRect.top < 0))
+    io.observe(hero)
+    return () => io.disconnect()
+  }, [])
 
   useEffect(() => {
     const io = new IntersectionObserver((entries) => {
@@ -425,7 +468,7 @@ export default function App() {
   }, [])
 
   return (
-    <div className="pb-36 md:pb-0">
+    <div className="pb-20 md:pb-0">
       <Header />
       <main>
         <Hero />
@@ -443,12 +486,14 @@ export default function App() {
 
       <WaLink
         msg={messages.general}
-        className="fixed right-4 bottom-20 z-40 flex size-14 items-center justify-center rounded-full bg-amber text-ink shadow-lg md:bottom-6"
+        className="fixed right-6 bottom-6 z-40 hidden size-14 items-center justify-center rounded-full bg-amber text-ink shadow-lg md:flex"
       >
         <MessageCircle className="size-7" aria-hidden />
         <span className="sr-only">Chat on WhatsApp</span>
       </WaLink>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 p-2 backdrop-blur md:hidden">
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 p-2 backdrop-blur transition-[transform,visibility] duration-300 ease-out md:hidden ${showBar ? '' : 'invisible translate-y-full'}`}
+      >
         <WaLink msg={messages.diagnostic} className={`${btnPrimary} h-12 w-full py-0`}>
           Book Diagnostic Drive • {taka(site.tiers[0].price)}
         </WaLink>

@@ -14,6 +14,9 @@
 html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
 body { background: var(--color-ink); color: var(--color-fg); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 :focus-visible { outline: 2px solid var(--color-amber); outline-offset: 3px; border-radius: 6px; }
+::selection { background: color-mix(in srgb, var(--color-amber) 35%, transparent); color: var(--color-fg); }
+h1, h2, h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
 
 .reveal { opacity: 0; transform: translateY(12px); transition: opacity .6s ease, transform .6s ease; }
 .reveal.in { opacity: 1; transform: none; }
