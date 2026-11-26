@@ -279,7 +279,7 @@ function Safety() {
     <Section id="safety" title="What keeps you, and your car, safe" intro="Your car has no instructor pedals, so safety comes from the order you learn in and from what is agreed before the first session.">
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <div className="grid content-start gap-5 sm:grid-cols-2 lg:grid-cols-1">
-          <figure className="flex min-h-44 flex-col gap-3 rounded-lg border-2 lg:min-h-0 border-ink p-4 sm:aspect-[1.586] lg:aspect-auto">
+          <figure className="flex flex-col gap-3 rounded-lg border-2 border-ink p-4 sm:aspect-[1.586] lg:aspect-auto">
             <p className="wide text-lg leading-tight font-bold">BRTA Professional Driving Licence</p>
             <figcaption className="text-ink-soft">Shown to you, with my NID, before Session 1.</figcaption>
           </figure>
