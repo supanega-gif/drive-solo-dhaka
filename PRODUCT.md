@@ -23,7 +23,7 @@ Lessons happen in your own car, from your own gate, on your own streets, at a ti
 
 ## Capabilities and Constraints
 - Single static page, Vite + React + TypeScript + Tailwind, hosted on GitHub Pages under `/drive-solo-dhaka/`. All editable values live in `src/config/site.ts`.
-- English only for now.
+- English by default, with a Bangla (বাংলা) switch in the header. All text lives in `src/copy.ts`. Mentor: Ahnaf Akbar (real name, shown for trust).
 - Packages: Diagnostic ৳1,200 (1 hour, fully credited toward Core or VIP within 7 days), Core ৳15,000 (10 hours), VIP ৳22,000 (15 hours), Top-up ৳6,500 (5 hours, active clients only).
 - Undecided: brand name ("Drive Solo Dhaka" is a placeholder; design so it swaps easily), domain, the terms page.
 
