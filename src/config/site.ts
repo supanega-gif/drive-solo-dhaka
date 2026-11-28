@@ -4,7 +4,7 @@ const DIAGNOSTIC_PRICE = 1200
 const DEDUCTIBLE_DAYS = 7
 
 export const site = {
-  brandName: 'Drive Solo Dhaka', // placeholder: swap for the final brand name
+  brandName: 'OwnWheel',
   whatsappNumber: '8801922603331', // international format, no +
   whatsappDisplay: '01922603331',
   sessionWindow: '6:00 AM – 8:00 AM',
